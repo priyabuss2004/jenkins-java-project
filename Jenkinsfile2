@@ -38,7 +38,7 @@ stage("Building the application"){
       }
    }
 
-   /*stage("Building the Docker Image"){
+   stage("Building the Docker Image"){
      steps {
          sh """
            echo "========Building the Docker Image ============"
@@ -59,13 +59,16 @@ stage("Building the application"){
                    '''
               }
         }
-     }*/
+     }
 
      stage('Connect to EC2 ') {
             steps {
                      
                     withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
-                    sh "ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ubuntu@65.0.100.41 'echo Connected to EC2'"
+                    sh "ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ubuntu@$MINIKUBE_IP 'echo Connected to EC2'"
+                    sh 'scp -i ${SSH_KEY} -o StrictHostKeyChecking=no deployment.yaml ubuntu@$MINIKUBE_IP:/home/ubuntu/'
+                    sh 'ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ubuntu@$MINIKUBE_IP "kubectl delete -f /home/ubuntu/deployment.yaml --ignore-not-found=true"'
+                    sh 'ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ubuntu@$MINIKUBE_IP "kubectl apply -f /home/ubuntu/deployment.yaml"'
                   }
           }
      }
